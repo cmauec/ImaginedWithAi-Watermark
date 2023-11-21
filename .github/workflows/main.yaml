@@ -1,0 +1,76 @@
+name: Build and Deploy to Cloud Run
+
+on:
+  push:
+    
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+
+jobs:
+  deploy-to-cloud-run:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: dorny/paths-filter@v2
+      id: filter
+      with:
+        filters: |
+          backend:
+            - 'backend/**'
+          frontend:
+            - 'frontend/**'
+
+    - name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v0.4.0
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+    
+    - name: Show gcloud version and configuration
+      run: |-
+        gcloud version
+        gcloud config list
+        gcloud auth configure-docker
+
+
+    - name: Build and Push Docker image Frontend
+      if: steps.filter.outputs.frontend == 'true'
+      run: |-
+        docker build -t gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_FRONTEND }}:$GITHUB_SHA --build-arg FORM_ACTION=${{ secrets.FORM_ACTION }} ./frontend
+        docker push gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_FRONTEND }}:$GITHUB_SHA
+
+    - name: Deploy to Cloud Run Frontend
+      if: steps.filter.outputs.frontend == 'true'
+      run: |-
+        gcloud run deploy ${{ secrets.GCP_APPLICATION_FRONTEND }} \
+          --image gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_FRONTEND }}:$GITHUB_SHA \
+          --platform managed \
+          --region us-central1 \
+          --allow-unauthenticated \
+          --memory=512M \
+          --cpu=1 \
+          --concurrency=150 \
+          --timeout=300 \
+          --max-instances=1 
+
+    - name: Build and Push Docker image Backend
+      if: steps.filter.outputs.backend == 'true'
+      run: |-
+        gcloud builds submit --quiet --tag gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_BACKEND }}:$GITHUB_SHA ./backend
+
+    - name: Deploy to Cloud Run Backend
+      if: steps.filter.outputs.backend == 'true'
+      run: |-
+        gcloud run deploy ${{ secrets.GCP_APPLICATION_BACKEND }} \
+          --image gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_BACKEND }}:$GITHUB_SHA \
+          --platform managed \
+          --region us-central1 \
+          --allow-unauthenticated \
+          --memory=512M \
+          --cpu=1 \
+          --concurrency=150 \
+          --timeout=300 \
+          --max-instances=1

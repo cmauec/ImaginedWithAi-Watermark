@@ -1,0 +1,77 @@
+---
+import "../styles/styles.scss";
+
+const formAction = import.meta.env.FORM_ACTION;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<title>Add "Imagined With AI"</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<div class="container">
+			<div class="center">
+				<h1 class="title">Add <span>"Imagined With AI"</span></h1>
+				<form
+					action={`${formAction}`}
+					method="POST"
+					enctype="multipart/form-data"
+				>
+					<label for="file" class="input primary-color">
+						Seleccionar imagen
+						<input
+							type="file"
+							id="file"
+							name="file"
+							accept="image/*"
+							required
+							style="display: none;"
+						/>
+					</label>
+
+					<button type="submit" class="input secondary-color">
+						Descargar con Watermark</button
+					>
+				</form>
+				<img id="preview" />
+				<div id="downloadMessage" style="display: none; color: white;">
+					¡Iniciando descarga!
+				</div>
+			</div>
+		</div>
+		<script is:inline>
+			document
+				.getElementById("file")
+				.addEventListener("change", function (event) {
+					var output = document.getElementById("preview");
+					output.src = URL.createObjectURL(event.target.files[0]);
+					output.onload = function () {
+						URL.revokeObjectURL(output.src);
+					};
+					output.style.display = "block";
+				});
+			document
+				.querySelector("form")
+				.addEventListener("submit", function () {
+					document.getElementById("preview").style.display = "none";
+					document.getElementById("downloadMessage").style.display =
+						"block";
+					setTimeout(function () {
+						document.getElementById(
+							"downloadMessage",
+						).style.display = "none";
+					}, 3000);
+				});
+		</script>
+	</body>
+</html>

@@ -1,0 +1,107 @@
+body {
+    margin: 0;
+}
+
+.container {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    width: 100vw;
+    background-color: #04091D;
+    background-image: radial-gradient(circle at center, #3D1A2D 0%, rgba(8, 4, 13, 0) 50%);
+    background-repeat: no-repeat;
+    background-position: center;
+
+    /* animación */
+    animation: growBackground 3s infinite alternate;
+}
+
+@keyframes growBackground {
+    0% {
+        background-size: 30% 30%;
+    }
+
+    100% {
+        background-size: 200% 200%;
+    }
+}
+
+.center {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.title {
+    font-family: 'Inter', sans-serif;
+    font-size: 50px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: normal;
+    color: #FFF;
+    margin-bottom: 70px;
+
+    span {
+        background: var(--texts, linear-gradient(90deg, #FF4E87 39.21%, #FE8B64 99.95%));
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-style: normal;
+        font-weight: 800;
+        line-height: normal;
+    }
+}
+
+.input {
+    display: inline-flex;
+    padding: 14px 20px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border-radius: 10px;
+    color: #FFF;
+    font-family: 'Inter', sans-serif;
+    font-size: 25px;
+    font-style: normal;
+    font-weight: 800;
+    line-height: normal;
+    border: none;
+    margin: 0 10px;
+}
+
+.primary-color {
+    background: linear-gradient(to right, #FF5E4F, #FF5E4F) no-repeat;
+    background-size: 200% 100%;
+    border: solid 2px #FF5E4F;
+    transition: all 0.3s ease;
+    background-position: 0% 0;
+
+    &:hover {
+        background-position: -100% 0;
+    }
+}
+
+.secondary-color {
+    background: linear-gradient(to right, #FF4E87, #FF4E87) no-repeat;
+    background-size: 200% 100%;
+    border: solid 2px #FF4E87;
+    transition: all 0.3s ease;
+    background-position: 0% 0;
+
+    &:hover {
+        background-position: -100% 0;
+    }
+}
+
+
+
+#preview {
+    max-width: 300px;
+    display: none;
+    margin: auto;
+    /* Centra la imagen dentro de .center */
+}

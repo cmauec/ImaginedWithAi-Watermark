@@ -1,0 +1,75 @@
+
+name: Manual Build and Deploy to Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      deployFrontend:
+        description: 'Deploy Frontend (yes/no)'
+        required: true
+        default: 'yes'
+      deployBackend:
+        description: 'Deploy Backend (yes/no)'
+        required: true
+        default: 'yes'
+
+jobs:
+    deploy-to-cloud-run:
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v3
+    
+        - name: Authenticate with Google Cloud
+          uses: google-github-actions/auth@v0.4.0
+          with:
+            credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+        
+        - name: Show gcloud version and configuration
+          run: |-
+            gcloud version
+            gcloud config list
+            gcloud auth configure-docker
+
+        - name: Debug output
+          run: |-
+            echo "DeployBackend input: ${{ github.event.inputs.deployBackend }}"
+            echo "DeployFrontend input: ${{ github.event.inputs.DeployFrontend }}"
+
+        - name: Build and Push Docker image Frontend
+          if:  github.event.inputs.deployFrontend == 'yes'
+          run: |-
+            docker build -t gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_FRONTEND }}:$GITHUB_SHA --build-arg FORM_ACTION=${{ secrets.FORM_ACTION }} ./frontend
+            docker push gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_FRONTEND }}:$GITHUB_SHA
+    
+        - name: Deploy to Cloud Run Frontend
+          if: github.event.inputs.deployFrontend == 'yes'
+          run: |-
+            gcloud run deploy ${{ secrets.GCP_APPLICATION_FRONTEND }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_FRONTEND }}:$GITHUB_SHA \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --memory=512M \
+            --cpu=1 \
+            --concurrency=150 \
+            --timeout=300 \
+            --max-instances=1 
+    
+        - name: Build and Push Docker image Backend
+          if: github.event.inputs.deployBackend == 'yes'
+          run: |-
+            gcloud builds submit --quiet --tag gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_BACKEND }}:$GITHUB_SHA ./backend
+    
+        - name: Deploy to Cloud Run Backend
+          if: github.event.inputs.deployBackend == 'yes'
+          run: |-
+            gcloud run deploy ${{ secrets.GCP_APPLICATION_BACKEND }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT }}/${{ secrets.GCP_APPLICATION_BACKEND }}:$GITHUB_SHA \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated \
+            --memory=512M \
+            --cpu=1 \
+            --concurrency=150 \
+            --timeout=300 \
+            --max-instances=1
